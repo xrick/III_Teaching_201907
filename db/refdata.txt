@@ -1,0 +1,3 @@
+https://sebastianraschka.com/Articles/2014_sqlite_in_python_tutorial.html
+
+https://pythontic.com/database/sqlite/delete
