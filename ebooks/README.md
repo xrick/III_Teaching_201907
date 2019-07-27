@@ -1,5 +1,6 @@
 ## <b>Python books:<b>
-### Python Cookbook (3rd).
+### Learning Numpy Array.
+### Modern Python Cookbook.
 ### Head First Python.
-### Python Crash Course.
+### Code Project in Python.
 ### Python Tricks.
