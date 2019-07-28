@@ -1,14 +1,37 @@
 import sqlite3
 from sqlite3 import Error
 import time
-
+import os
 #STOCK_TA
 QUERY_EXISTED = False
 
+def checkAndCreatDB(DBName):
+    if_file = os.path.isfile(DBName)
+    _res = None
+    if not if_file:
+        print("Creating new {}".format(DBName))
+        _res = CreateDB(DBName)
+    return _res
+
+def CreateDB(DBName):
+    try:
+        conn = sqlite3.connect(DBName) 
+        c = conn.cursor()
+        c.execute('CREATE TABLE queryrecordtb ([reply_token] text ,[querytime] text, [sessionstatus] integer, [queryType] text)')
+        c.close()
+        return conn
+    except Error as e:
+        print("The error is {}".format(e))
+        return None
+  
 
 def BuildConnectionToRecordDB(DBName):
     try:
-        conn = sqlite3.connect(DBName)
+        conn = checkAndCreatDB(DBName)
+        if conn:
+            return conn
+        else:
+           conn = sqlite3.connect(DBName)
         return conn
     except Error as e:
         print(e)
