@@ -44,6 +44,13 @@ SQLITEDB = "dialogrecordDB.db"
 query_type_stock = "S01"
 query_type_aqi = "S02"
 
+#STOCK_TXT_KEYWORDS=["查詢臺股","查詢台股","今日股票"]
+STOCK_TXT_KEYWORDS=[]
+with open("stockkeywords.txt","r",encoding="utf-8") as f:
+    lines = f.readlines()
+    for word in lines:
+        STOCK_TXT_KEYWORDS.append(word.replace('\n',''))
+#print(STOCK_TXT_KEYWORDS)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -67,9 +74,8 @@ def hello_world():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-    
     response_to_user_id = event.source.user_id
-    type_of_event = str(type(event))
+    #type_of_event = str(type(event))
     ######## First Section of IF Statements #########
     if event.message.text == 'clean_all':
         conn = DbHelper.BuildConnectionToRecordDB(SQLITEDB)
@@ -86,7 +92,7 @@ def handle_text_message(event):
         line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content))
         return 0
 
-    if event.message.text == '查詢臺股':
+    if event.message.text in STOCK_TXT_KEYWORDS:
         conn = DbHelper.BuildConnectionToRecordDB(SQLITEDB)
         with conn:
             cur = conn.cursor()
@@ -173,8 +179,11 @@ def retrieveTWStock(stocknum=0000):
     #firstly, check this
     rs=requests.session()
     res=rs.get(websites['TWSTOCK'].format(stocknum))
-    qstock = json.loads(res.text)
-    return processingStockData(qstock)
+    rawStockData = json.loads(res.text)['msgArray']
+    if (len(rawStockData) > 0):
+        return processingStockData(rawStockData)
+    else:
+        return "查詢不到資料，請重新在選單中執行「查詢臺股」"
 
 ################ End OF Content Generation Functions #################
 
@@ -184,7 +193,7 @@ def retrieveTWStock(stocknum=0000):
 def processingStockData(rawJson):
     # 過濾出有用到的欄位
     columns = ['c', 'n', 'z', 'tv', 'v', 'o', 'h', 'l', 'y']
-    df = pd.DataFrame(rawJson['msgArray'], columns=columns)
+    df = pd.DataFrame(rawJson, columns=columns)
     df.columns = ['股票代號', '公司簡稱', '當盤成交價', '當盤成交量',
                   '累積成交量', '開盤價', '最高價', '最低價', '昨收價']
     # 新增漲跌百分比
@@ -203,4 +212,4 @@ def processingStockData(rawJson):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=80)
