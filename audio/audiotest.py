@@ -6,7 +6,10 @@ from speech_recognition import Microphone
 AUDIONAME='harvard.wav'
 NOISEAUDIONAME='jackhammer.wav'
 ZHAUDIONAME='mandarin01.flac'
-
+"""
+r.energy_threshold = 300 #設定多大能量上才會持續收聽
+r.dynamic_energy_threshold = False
+"""
 def _Init_Test(audioname):
     return sr.AudioFile(audioname), Recognizer()
 
@@ -40,13 +43,20 @@ def detectMicrophone():
         r = sr.Recognizer()
         print("Start to listen pls say something:")
         audio = r.listen(audio_source)
-        print(r.recognize_google(audio,language='zh-TW'))
+        result = r.recognize_google(audio,language='zh-TW')
+        if not isinstance(result,dict) or len(result.get("alternative",[])):
+            raise sr.UnknownValueError
+            print("excute exception and return to here")
+        print(reult)
 
 def apprun(audio_name):
-   #googleRecognition(audio_name)
-   #googleRecognitionOffSet(audio_name)
-   #googleRecognitionNoise(audio_name)
-   detectMicrophone()
+    try:
+       detectMicrophone()
+    except sr.UnknownValueError:
+        print("error occured!")
+    finally:
+        print("Program is terminated")
+
 
 
 if __name__ == "__main__":
