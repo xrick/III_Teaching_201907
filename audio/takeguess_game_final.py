@@ -1,0 +1,86 @@
+import random
+import time
+import speech_recognition as sr
+import sys
+
+def recognize_speech_from_mic(recognizer, microphone):
+
+    if not isinstance(recognizer, sr.Recognizer):
+        raise TypeError("`recognizer` must be `Recognizer` instance")
+
+    if not isinstance(microphone, sr.Microphone):
+        raise TypeError("`microphone` must be `Microphone` instance")
+  
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+
+    response = {
+        "success": True,
+        "error": None,
+        "transcription": None
+    }
+    try:
+        print("進行辨識")
+        response["transcription"] = recognizer.recognize_google(audio,language="zh-TW")
+    except sr.RequestError:
+        response["success"] = False
+        response["error"] = "Google語音API無法使用"
+    except sr.UnknownValueError:
+        response["error"] = "您的輸入有問題，請重新啟動程式"
+
+    return response
+
+    
+
+
+
+def EnterGameLogic():
+
+    WORDS = ["昂首闊步", "碧海青天", "拔刀相助", "安安穩穩", "奔走相告", "愛人以德"]
+    NUM_GUESSES = 3
+    PROMPT_LIMIT = 5
+
+    answer = random.choice(WORDS)
+
+    instructions = (
+        "請由以下的成語中猜中一個:\n"
+        "{words}\n"
+        "每次遊玩共有{n}機會。\n"
+    ).format(words=', '.join(WORDS), n=NUM_GUESSES)
+    # create recognizer and mic instances
+    print(instructions)
+    guess_counter = 0
+    #prompt_counter= 0
+    rec = sr.Recognizer()
+    mic = sr.Microphone()
+    rec.energy_threshold = 300
+    while 1:
+        guess_counter += 1
+        print('進行第 {} 次猜看看. 請說：'.format(guess_counter))
+        guess = recognize_speech_from_mic(rec, mic)
+        #print(guess)
+        if not guess["success"]:
+            break
+            
+        # 如果程式發生錯誤，跳出while-loop
+        if guess["error"]:
+            print("發生錯誤: {}".format(guess["error"]))
+            break
+            
+        # 輸出玩家講的結果
+        print("你/妳的答案: {}".format(guess["transcription"]))
+        #進行答案比對及計算使用者是否可以再繼玩
+        guess_is_correct = guess["transcription"] == answer
+        user_has_more_attempts = guess_counter < NUM_GUESSES
+        if guess_is_correct:
+            print("答對了，恭喜你/妳獲得獎金：.......100萬(顆石頭)".format(answer))
+            break
+        elif user_has_more_attempts:
+            print("不對喔，不過你/妳還有{}次機會.\n".format(guess_counter))
+        else:
+                print("抱歉，沒猜中耶，\n正確答案是: '{}'.".format(answer))
+                break
+
+if __name__=="__main__":
+    EnterGameLogic()
