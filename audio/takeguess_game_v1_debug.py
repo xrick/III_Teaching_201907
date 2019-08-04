@@ -30,7 +30,7 @@ def EnterGameLogic():
     rec = sr.Recognizer()
     mic = sr.Microphone()
     rec.energy_threshold = 300
-
+    audio_clip = None
     if not isinstance(rec, sr.Recognizer):
         raise TypeError("`recognizer` must be `Recognizer` instance")
 
@@ -39,39 +39,35 @@ def EnterGameLogic():
 
     with mic as source:
         rec.adjust_for_ambient_noise(source)
-        audio = rec.listen(source)
-
-    
-    try:
-        print("進行辨識")
-        response["transcription"] = rec.recognize_google(audio, language="zh-TW")
-    except sr.RequestError:
-        response["success"] = False
-        response["error"] = "Google語音API無法使用"
-    except sr.UnknownValueError:
-        response["error"] = "您的輸入有問題，請重新啟動程式"
-
-
-
+        audio_clip = rec.listen(source)
 
 
     while 1:
         guess_counter += 1
-        print('進行第 {} 次猜看看. 請說：'.format(guess_counter))
-        guess = recognize_speech_from_mic(rec, mic)
-        #print(guess)
-        if not guess["success"]:
-            break
+        #print('進行第 {} 次猜看看. 請說：'.format(guess_counter))
+        print("進行辨識,")
+        guess = rec.recognize_google(audio_clip, language="zh-TW")
+        res = response
+        try: 
+            res["transcription"] = guess
+        except sr.RequestError:
+            res["success"] = False
+            res["error"] = "Google語音API無法使用"
+        except sr.UnknownValueError:
+            res["error"] = "您的輸入有問題，請重新啟動程式"
+            #print(guess)
+            if not res["success"]:
+                break
             
         # 如果程式發生錯誤，跳出while-loop
-        if guess["error"]:
-            print("發生錯誤: {}".format(guess["error"]))
+        if res["error"]:
+            print("發生錯誤: {}".format(res["error"]))
             break
             
         # 輸出玩家講的結果
-        print("你/妳的答案: {}".format(guess["transcription"]))
+        print("你/妳的答案: {}".format(res["transcription"]))
         #進行答案比對及計算使用者是否可以再繼玩
-        guess_is_correct = guess["transcription"] == answer
+        guess_is_correct = res["transcription"] == answer
         user_has_more_attempts = guess_counter < NUM_GUESSES
         if guess_is_correct:
             print("答對了，恭喜你/妳獲得獎金：.......100萬(顆石頭)".format(answer))
